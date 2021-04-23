@@ -1,11 +1,24 @@
+import { GetStaticProps } from 'next';
+import { api } from '../services/api';
+
 // 1 - SPA
 // 2 - SSR
 // 3 - SSG
 
 //1 - import { useEffect } from "react"
 
+type Episode = {
+  id: string;
+  title: string;
+  members: string;
 
-export default function Home(props) {
+}
+
+type HomeProps = {
+  episodes: Episode[]
+}
+
+export default function Home(props: HomeProps) {
 
   // 1 - SPA
   // useEffect(() => {
@@ -13,6 +26,7 @@ export default function Home(props) {
   //   .then(response => response.json())
   //   .then(data => console.log(data))
   // }, [])
+
 
   return (
     <>
@@ -35,9 +49,15 @@ export default function Home(props) {
 
 
 // 3 - SSG - executa toda vez que alguem acessa a home da aplicacao - só funciona em produção
-export async function getStaticProps() {
-  const response = await fetch('http://localhost:3333/episodes')
-  const data = await response.json()
+export const getStaticProps : GetStaticProps = async () => {
+  const { data } = await api.get('/apisodes', { 
+    params: { 
+      _limit: 12,
+      _sort:'published_at',
+      _order: 'desc'
+    }
+  })
+
   return { 
     props: { // sempre props
       episodes: data, //qualquer nome
