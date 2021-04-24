@@ -1,11 +1,15 @@
 import { GetStaticProps } from 'next';
 import Image from 'next/image';
-import { api } from '../services/api';
+import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
-import ptBR from 'date-fns/locale/pt-BR'
+import ptBR from 'date-fns/locale/pt-BR';
+
 import { convertDurationToTime } from '../utils/convertDurationToTimeString';
+import { api } from '../services/api';
 
 import styles from './home.module.scss';
+
+
 
 // 1 - SPA
 // 2 - SSR
@@ -17,7 +21,6 @@ type Episode = {
   id: string;
   title: string;
   thumbnail: string;
-  description: string;
   members: string;
   duration: number;
   durationAsString: string;
@@ -30,7 +33,7 @@ type HomeProps = {
   allEpisodes: Episode[];
 }
 
-export default function Home({ latestEpisodes, allEpisodes } : HomeProps) {
+export default function Home({ latestEpisodes, allEpisodes }: HomeProps) {
 
   // 1 - SPA
   // useEffect(() => {
@@ -46,35 +49,84 @@ export default function Home({ latestEpisodes, allEpisodes } : HomeProps) {
         <h2>Últimos Lançamentos</h2>
         <ul>
           {
-          latestEpisodes.map(episode => {
-            return (
-              <li key={episode.id}>
-                <Image 
-                  width={192} 
-                  height={192} 
-                  src={episode.thumbnail} 
-                  alt={episode.title} 
-                  objectFit="cover"
-                />
+            latestEpisodes.map(episode => {
+              return (
+                <li key={episode.id}>
+                  <Image
+                    width={192}
+                    height={192}
+                    src={episode.thumbnail}
+                    alt={episode.title}
+                    objectFit="cover"
+                  />
 
-                <div className={styles.episodeDetails}>
-                  <a href="">{episode.title}</a>
-                  <p>{episode.members}</p>
-                  <span>{episode.publishedAt}</span>
-                  <span>{episode.durationAsString}</span>
-                </div>
-                <button type="button">
-                  <img src="/play-green.svg" alt="Tocar episódio"/>
-                </button>
+                  <div className={styles.episodeDetails}>
+                    <Link href={`/episodes/${episode.id}`}>
+                      <a>{episode.title}</a>
+                    </Link>
 
-              </li>
+                    <p>{episode.members}</p>
+                    <span>{episode.publishedAt}</span>
+                    <span>{episode.durationAsString}</span>
+                  </div>
+                  <button type="button">
+                    <img src="/play-green.svg" alt="Tocar episódio" />
+                  </button>
+                </li>
+              )
+            }
             )
-          }
-          )
           }
         </ul>
       </section>
-      <section className={styles.allEpisodes}></section>
+      <section className={styles.allEpisodes}>
+        <h2>Todos episódios</h2>
+        <table cellSpacing={0}>
+          <thead>
+            <tr>
+              <th></th>
+              <th>Podcast</th>
+              <th>Integrantes</th>
+              <th>Data</th>
+              <th>uuração</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              allEpisodes.map(episode => {
+                return (
+                  <tr key={episode.id}>
+                    <td style={{ width: 72 }}>
+                      <Image
+                        width={120}
+                        height={120}
+                        src={episode.thumbnail}
+                        alt={episode.title}
+                        objectFit="cover"
+                      />
+                    </td>
+                    <td>
+                      <Link href={`/episodes/${episode.id}`}>
+                        <a>{episode.title}</a>
+                      </Link>
+                      
+                    </td>
+                    <td>{episode.members}</td>
+                    <td style={{ width: 100 }}>{episode.publishedAt}</td>
+                    <td>{episode.durationAsString}</td>
+                    <td>
+                      <button type="button">
+                        <img src="/play-green.svg" alt="Tocar episódio" />
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })
+            }
+          </tbody>
+        </table>
+      </section>
     </div>
   )
 }
@@ -92,11 +144,11 @@ export default function Home({ latestEpisodes, allEpisodes } : HomeProps) {
 
 
 // 3 - SSG - executa toda vez que alguem acessa a home da aplicacao - só funciona em produção
-export const getStaticProps : GetStaticProps = async () => {
-  const { data } = await api.get('/episodes', { 
-    params: { 
+export const getStaticProps: GetStaticProps = async () => {
+  const { data } = await api.get('/episodes', {
+    params: {
       _limit: 12,
-      _sort:'published_at',
+      _sort: 'published_at',
       _order: 'desc'
     }
   })
@@ -107,23 +159,22 @@ export const getStaticProps : GetStaticProps = async () => {
       title: episode.title,
       thumbnail: episode.thumbnail,
       members: episode.members,
-      publishedAt: format(parseISO(episode.published_at), 'd MMM yy', { locale: ptBR}),
+      publishedAt: format(parseISO(episode.published_at), 'd MMM yy', { locale: ptBR }),
       duration: Number(episode.file.duration),
       durationAsString: convertDurationToTime(Number(episode.file.duration)),
-      description: episode.description,
       url: episode.file.url,
 
     };
   })
 
-  const latestEpisodes = episodes.slice(0,2);
+  const latestEpisodes = episodes.slice(0, 2);
   const allEpisodes = episodes.slice(2, episodes.length);
 
-  return { 
+  return {
     props: { // sempre props
       latestEpisodes: latestEpisodes, //qualquer nome
-      allEpisodes: allEpisodes, 
+      allEpisodes: allEpisodes,
     },
-    revalidate: 60*60*8 // tempo em segundos para que uma nova versão da pagina seja gerada
+    revalidate: 60 * 60 * 8 // tempo em segundos para que uma nova versão da pagina seja gerada
   }
 }
