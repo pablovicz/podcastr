@@ -8,6 +8,7 @@ import { useRouter } from 'next/router';
 import { api } from '../../services/api';
 import { convertDurationToTime } from '../../utils/convertDurationToTimeString';
 import styles from './episode.module.scss';
+import { usePlayer } from '../../contexts/PlayerContext';
 
 
 type Episode = {
@@ -33,6 +34,7 @@ export default function Episode({ episode }: EpisodeProps) {
   // if (router.isFallback) {
   //   return <p>Carregando</p>
   // }
+  const { play } = usePlayer();
 
 
   return (
@@ -51,7 +53,7 @@ export default function Episode({ episode }: EpisodeProps) {
           objectFit="cover"
         />
         <button type="button">
-          <img src="/play.svg" alt="Tocar episódio" />
+          <img src="/play.svg" alt="Tocar episódio" onClick={() => play(episode)}/>
         </button>
       </div>
       <header>
